@@ -1,0 +1,17 @@
+
+===== 2018 version fixes =====
+
+01. Fixed broken functionality in storeRLStatisticsEachEpisode that should have updated episode_high_val.
+02. Restored learning rate change functionality.
+03. Cleaned up CPU time registering system.
+04. Extracted all parameters from main program and added documentation for them.
+05. Extracted parameters for episode limit, convergence buffer, and exploration before splitting.
+06. Removed deprecated code involving parsimony.
+07. Replaced multiple overlapping output formats with silent/quiet/verbose calls.
+08. Updated axiom lifting with better variablisation and consistent formatting of output axioms as strings.
+09. Corrected domain errors.
+10. Made registered CPU time information print to the correct output stream.
+11. Added consistent file headers.
+12. Removed deprecated comments and documentation for prior versions.
+13. Added documentation for data_collector.pl, rrl_d.
+14. Replaced 'domain_test_alternatives' predicate functionality in domain with equivalent system-level functionality and option for domain to add additional cases.
