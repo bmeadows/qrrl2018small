@@ -7,7 +7,7 @@
 
 :- dynamic results_filter/3.
 
-% This function, after a batch of Q-RRL has been run, analyses the error data and for each level of filtering prints a row to the file noise_analysis.txt in the format
+% This function, after a batch of Q-RRL has been run, analyses the error data and for each level of filtering prints a row to the file post_analysis.txt in the format
 % X: Y Z
 % where X is how many filters have been used, Y is the number of false positives overspecifying true target axioms, and Z is the number of 'genuine' false positives.
 batch_collect_data :-
@@ -59,11 +59,11 @@ matchesWithOverfitting(Y1,N1) :-
 	subset(YesSubset,Y1),
 	subset(NoSubset,N1).
 
-% Send results to 'noise_analysis.txt'
+% Send results to 'post_analysis.txt'
 printResult :-
-	open('noise_analysis.txt', write, Stream),
+	open('post_analysis.txt', write, Stream),
 	printEach(0,11,Stream),
-	close('noise_analysis.txt').
+	close('post_analysis.txt').
 
 printEach(Current,Current,_) :- !.
 printEach(Current,Finish,Stream) :-
