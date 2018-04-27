@@ -8,8 +8,8 @@
 :- dynamic register/3, struc/3, currentState/1, goalState/1, goalreached/0, episode_count/1, initial_num_of_episodes/1, currentNodeId/1, root/1, leaf/1, parent/2, child_y/2, 
 child_n/2, test/2, predicted_q_value/3, leaf_stored_example/6, split_count/1, no_split_count/1, num_possible_attribute_configs/1, end_by_goal_counter/1, end_by_domain_counter/1, clause1count/1, 
 clause2count/1, clause3count/1, finaloutputfile/1, output_file_counter/1, output_file_error/1, output_file_time/1, domain_specified_end/0, qValueLearned/5, leaf_generalised/2, data_output_file/1, 
-total_config_count/1, learned_config/1, episode_high_val/3, examplepathrecord/5, semifinalexample/6, finalexample/5, candidate_axiom/7, final_axiom/7, lastActionWas/1, last_split_at/1, 
-sumQCollector/1, countCollector/1, random_sampling_count/1, number_of_random_sample_draws_to_make/1, affectedLeavesThisConfig/1, number_of_configs_to_search/1, noiseChancePercent/1.
+total_config_count/1, learned_config/1, episode_high_val/3, examplepathrecord/5, semifinalexample/6, finalexample/5, candidate_axiom/7, final_axiom/7, final_lifted_axiom/2, lastActionWas/1, 
+last_split_at/1, sumQCollector/1, countCollector/1, random_sampling_count/1, number_of_random_sample_draws_to_make/1, affectedLeavesThisConfig/1, number_of_configs_to_search/1, noiseChancePercent/1.
 
 :- discontiguous permitted_domain_test_alternatives/2.
 
@@ -205,15 +205,15 @@ printState :-
 printState.
 
 % Print the first episode of the first configuration, and every thousandth episode of every fifth configuration thereafter.
-printTableAtEndOfEpisode :-
+printTreeAtEndOfEpisode :-
 	episode_count(N),
 	 (0 is N mod 1000),
 	total_config_count(Y),
 	(0 is Y mod 5),
 	!,
-	println_minor('End of an episode, learned values:\n'),
+	println_minor('End of an episode, BDT and learned values:\n'),
 	printLearnedBDT.
-printTableAtEndOfEpisode :- !.
+printTreeAtEndOfEpisode :- !.
 
 % Print the BDT (structure, tests, predicted QValues, and supporting information).
 printLearnedBDT :-
@@ -256,34 +256,19 @@ printTree(ID, Symbol, Count) :-
 	print_minor('], configs '),
 	findall(CID, leaf_stored_example(ID, _, _, _, _, CID), CIDLIST),
 	sort(CIDLIST, Configs),
-	println_minor(Configs).
+	print_minor_list(Configs), println_minor('').
 
 printTree(ID, Symbol, Count) :-
 	child_y(ID, IDY),
 	child_n(ID, IDN),
 	printTreeSpaces(Count),
 	print_minor(Symbol), print_minor(' #'), print_minor(ID), print_minor('  '),
-	( test(ID, T) -> (print_minor(T), print_minor('?')) ; print_minor('[no test]') ),
+	( test(ID, T) -> (printterm_minor(T), print_minor('?')) ; print_minor('[no test]') ),
 	!,
 	nl_minor,
 	New is Count + 1,
 	printTree(IDY, 'Y', New),
 	printTree(IDN, 'N', New).
-	
-printLeafExamples(ID, Count) :-
-	printTreeSpaces(Count),
-	printTreeSpaces(1),
-	leaf_stored_example(ID, Remainder, ExCount, _SumOfQ, _SumOfSquaredQ, Confs),
-	print_minor('{'),
-	print_minor(Remainder),
-	print_minor('} : '),
-	print_minor(ExCount),
-	print_minor(' examples. '),
-	print_minor('<'),
-	print_minor(Confs),
-	print_minor('>\n'),
-	fail.
-printLeafExamples(_, _) :- !.
 
 printTreeSpaces(0) :- !.
 printTreeSpaces(Count) :-
@@ -291,6 +276,40 @@ printTreeSpaces(Count) :-
 	print_minor('  '),
 	N is Count - 1,
 	printTreeSpaces(N).
+
+%%%%% %%%%% %%%%% %%%%% %%%%% %%%%% 
+% Not used for tree printing. Useful for debugging.
+printLeafExamples(ID, Count) :-
+	printTreeSpaces(Count),
+	printTreeSpaces(1),
+	leaf_stored_example(ID, Remainder, ExCount, _SumOfQ, _SumOfSquaredQ, Confs),
+	print_minor_list(Remainder),
+	print_minor(' : '),
+	print_minor(ExCount),
+	print_minor(' examples. '),
+	print_minor('<'),
+	print_minor(Confs),
+	print_minor('>\n'),
+	fail.
+printLeafExamples(_, _) :- !.
+%%%%% %%%%% %%%%% %%%%% %%%%% %%%%% 
+
+print_minor_list(List) :-
+	print_minor('{'),
+	print_minor_list_recurse(List),
+	print_minor('}.').
+print_minor_list_recurse([]).
+print_minor_list_recurse([A]) :-
+	printterm_minor(A),
+	!.
+print_minor_list_recurse([A|B]) :-
+	printterm_minor(A),
+	print_minor(', '),
+	print_minor_list_recurse(B).
+
+printterm_minor(Term) :-
+	term_string(Term, S),
+	print_minor(S).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -440,7 +459,7 @@ performEpisodesForOneConfig :-
 	
 	exit_register(tree_split_checking),
 	
-	printTableAtEndOfEpisode,
+	printTreeAtEndOfEpisode,
 	!,
 	Y is X+1,
 	retractall(episode_count(X)),
@@ -1373,7 +1392,7 @@ oracleFilterCandidates_by_rule_type(N,Act,True,False,Mean,Worst,C,Configs) :-
 	setAndTryNonvirtuousState(TargAction,ID,True,False),
 	(not(actionActuallyHasUnexpectedOutcomeInDomain)
 		->
-		(print_low('  Pruning candidate <positive affordance> #'), println_low(N),
+		(print_medium('  Pruning candidate <positive affordance> #'), println_medium(N),
 		retractall(final_axiom(N,Act,[True,False],Mean,Worst,C,Configs)))
 		;
 		true
@@ -1385,7 +1404,7 @@ oracleFilterCandidates_by_rule_type(N,Act,True,False,Mean,Worst,C,Configs) :-
 	setAndTryVirtuousState(True,False),	
 	(not((systemThinksActionWillFailInDomain ; actionActuallyHasUnexpectedOutcomeInDomain))
 		->
-		(print_low('  Pruning candidate #'), println_low(N),
+		(print_medium('  Pruning candidate #'), println_medium(N),
 		retractall(final_axiom(N,Act,[True,False],Mean,Worst,C,Configs)))
 		;
 		true

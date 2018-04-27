@@ -19,7 +19,7 @@ send_terminal_output_to('term_output.txt').
 % The feedback level specifies how much information to print in output.
 % Silent mode only prints key results and errors. Quiet mode additionally prints intermediate feedback on Q-RRL. Verbose mode prints all available text.
 % Options: silent, quiet, verbose.
-feedback(quiet).
+feedback(verbose).
 
 % This debug mode, if set, define behaviour that registers information on how many CPU-seconds are spent in different functions.
 % Options: true, false.
